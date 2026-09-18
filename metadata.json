@@ -1,0 +1,6 @@
+{
+  "name": "Pokédex Interativa Studio",
+  "description": "Plataforma de visualização, exportação e simulação do app de Pokédex Interativa em Flutter para entrega de trabalho de faculdade.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
