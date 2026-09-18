@@ -57,29 +57,40 @@ export default function App() {
   // Estados de Acessibilidade Simulado
   const [talkbackEnabled, setTalkbackEnabled] = useState(false);
   const [talkbackText, setTalkbackText] = useState('Selecione um elemento para ouvir a descrição de acessibilidade.');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sincroniza dados com o LocalStorage do simulador
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(prev => prev === msg ? null : prev);
+    }, 3000);
+  };
+
+  // Sincroniza dados com o LocalStorage (equivalente ao SharedPreferences no navegador)
   useEffect(() => {
-    const cachedUser = localStorage.getItem('sim_current_user');
-    if (cachedUser) {
-      setSimUser(cachedUser);
-      setSimScreen('catalog');
-      loadSimulatorData(cachedUser);
-    }
+    const cachedUser = localStorage.getItem('sim_current_user') || 'treinador';
+    setSimUser(cachedUser);
+    loadSimulatorData(cachedUser);
+    loadInitialPokemon();
   }, []);
 
   // Carrega lista de pokémons inicial ao logar no simulador
   useEffect(() => {
     if (simUser) {
-      loadInitialPokemon();
+      loadSimulatorData(simUser);
     }
   }, [simUser]);
 
   const loadSimulatorData = (username: string) => {
-    const favs = localStorage.getItem(`sim_fav_list_${username.toLowerCase()}`);
-    const caps = localStorage.getItem(`sim_con_list_${username.toLowerCase()}`);
-    setSimFavorites(favs ? JSON.parse(favs) : []);
-    setSimCaptured(caps ? JSON.parse(caps) : []);
+    try {
+      const favs = localStorage.getItem(`sim_fav_list_${username.toLowerCase()}`);
+      const caps = localStorage.getItem(`sim_con_list_${username.toLowerCase()}`);
+      setSimFavorites(favs ? JSON.parse(favs) : []);
+      setSimCaptured(caps ? JSON.parse(caps) : []);
+    } catch (_) {
+      setSimFavorites([]);
+      setSimCaptured([]);
+    }
   };
 
   const loadInitialPokemon = async () => {
@@ -238,36 +249,53 @@ export default function App() {
     triggerTalkback("Sessão finalizada. Retornando para a tela de login.");
   };
 
+  const getActiveUser = () => {
+    const user = simUser || localStorage.getItem('sim_current_user') || 'treinador';
+    if (!simUser) {
+      setSimUser(user);
+      localStorage.setItem('sim_current_user', user);
+    }
+    return user;
+  };
+
   // Toggle de Favorito (RF04 / RF06)
   const toggleFavorite = (poke: any) => {
-    if (!simUser) return;
+    if (!poke) return;
+    const user = getActiveUser();
     let newFavs = [...simFavorites];
     const index = newFavs.findIndex(p => p.id === poke.id);
+    let msg = "";
     if (index > -1) {
       newFavs.splice(index, 1);
-      triggerTalkback(`${poke.name.toUpperCase()} removido dos favoritos.`);
+      msg = `${poke.name.toUpperCase()} removido dos favoritos.`;
     } else {
       newFavs.push(poke);
-      triggerTalkback(`${poke.name.toUpperCase()} adicionado aos favoritos.`);
+      msg = `★ ${poke.name.toUpperCase()} salvo nos Favoritos (SharedPreferences)!`;
     }
     setSimFavorites(newFavs);
-    localStorage.setItem(`sim_fav_list_${simUser.toLowerCase()}`, JSON.stringify(newFavs));
+    localStorage.setItem(`sim_fav_list_${user.toLowerCase()}`, JSON.stringify(newFavs));
+    triggerTalkback(msg);
+    showToast(msg);
   };
 
   // Toggle de Capturado / Consumido (RF07 / RF06)
   const toggleCaptured = (poke: any) => {
-    if (!simUser) return;
+    if (!poke) return;
+    const user = getActiveUser();
     let newCaps = [...simCaptured];
     const index = newCaps.findIndex(p => p.id === poke.id);
+    let msg = "";
     if (index > -1) {
       newCaps.splice(index, 1);
-      triggerTalkback(`${poke.name.toUpperCase()} marcado como não capturado.`);
+      msg = `${poke.name.toUpperCase()} desmarcado como capturado.`;
     } else {
       newCaps.push(poke);
-      triggerTalkback(`${poke.name.toUpperCase()} marcado como CAPTURADO.`);
+      msg = `🔴 ${poke.name.toUpperCase()} capturado e salvo no SharedPreferences!`;
     }
     setSimCaptured(newCaps);
-    localStorage.setItem(`sim_con_list_${simUser.toLowerCase()}`, JSON.stringify(newCaps));
+    localStorage.setItem(`sim_con_list_${user.toLowerCase()}`, JSON.stringify(newCaps));
+    triggerTalkback(msg);
+    showToast(msg);
   };
 
   const isFavorite = (id: number) => simFavorites.some(p => p.id === id);
@@ -391,8 +419,16 @@ export default function App() {
                 </span>
               </div>
 
+              {/* Toast de Confirmação de Salvamento no SharedPreferences */}
+              {toastMessage && (
+                <div className="absolute top-12 left-3 right-3 z-50 bg-zinc-900 text-white px-3 py-2 rounded-xl text-[11px] font-semibold flex items-center gap-2 shadow-xl border border-zinc-700">
+                  <span className="text-amber-400 text-sm">💾</span>
+                  <span className="flex-1 truncate">{toastMessage}</span>
+                </div>
+              )}
+
               {/* CONTEÚDO DAS TELAS DO SIMULADOR */}
-              <div className="flex-1 flex flex-col overflow-y-auto">
+              <div className="flex-1 flex flex-col overflow-y-auto relative">
                 {simScreen === 'login' && (
                   <div className="flex-1 bg-red-50 flex flex-col justify-center p-6">
                     <div className="bg-white rounded-2xl p-6 shadow-md border border-zinc-200 flex flex-col items-center">
@@ -454,6 +490,25 @@ export default function App() {
                           {isRegistering ? "CADASTRAR" : "ENTRAR"}
                         </button>
                       </form>
+
+                      {/* Botão de Teste Rápido com 1 clique */}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const defaultUser = "treinador";
+                          localStorage.setItem('sim_current_user', defaultUser);
+                          localStorage.setItem(`sim_user_pwd_${defaultUser}`, "123456");
+                          setSimUser(defaultUser);
+                          setSimScreen('catalog');
+                          loadSimulatorData(defaultUser);
+                          triggerTalkback("Login rápido efetuado como treinador.");
+                          showToast("Conectado como treinador! Dados salvos no SharedPreferences.");
+                        }}
+                        onMouseEnter={() => triggerTalkback("Entrar direto com conta de teste")}
+                        className="w-full mt-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all text-white font-bold py-2 rounded-lg text-[11px] tracking-wider uppercase shadow-sm flex items-center justify-center gap-1.5"
+                      >
+                        <span>⚡ Entrar Rápido (1 Clique)</span>
+                      </button>
 
                       <button 
                         onClick={() => {
@@ -547,6 +602,19 @@ export default function App() {
                                     onMouseEnter={() => triggerTalkback(`Pokémon ${p.name}, número ${p.id}. Clique duas vezes para ver detalhes.`)}
                                     className="bg-white rounded-xl p-2.5 border border-zinc-200/80 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col items-center text-center relative group"
                                   >
+                                    {/* Botão Rápido de Favoritar no Card */}
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleFavorite(p);
+                                      }}
+                                      onMouseEnter={() => triggerTalkback(isFavorite(p.id) ? "Remover dos favoritos" : "Adicionar aos favoritos")}
+                                      className="absolute top-1.5 left-2 p-0.5 text-zinc-400 hover:text-amber-500 rounded-full z-10"
+                                      title={isFavorite(p.id) ? "Favoritado" : "Favoritar"}
+                                    >
+                                      <StarIcon className={`w-3.5 h-3.5 ${isFavorite(p.id) ? 'fill-amber-400 text-amber-500' : 'text-zinc-300'}`} />
+                                    </button>
+
                                     <span className="absolute top-1 right-2 text-[9px] font-bold text-zinc-400">
                                       #{p.id.toString().padStart(3, '0')}
                                     </span>
@@ -567,6 +635,11 @@ export default function App() {
                                         );
                                       })}
                                     </div>
+                                    {isCaptured(p.id) && (
+                                      <span className="mt-1 text-[8px] bg-green-100 text-green-800 font-bold px-1.5 py-0.5 rounded-full border border-green-200 flex items-center gap-0.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Capturado
+                                      </span>
+                                    )}
                                   </div>
                                 );
                               })}
@@ -651,6 +724,20 @@ export default function App() {
                           >
                             <span>{isCaptured(selectedPokemon.id) ? "✓ CAPTURADO!" : "MARCAR COMO CAPTURADO"}</span>
                           </button>
+
+                          {/* Indicador em Tempo Real de Persistência no SharedPreferences (RF06) */}
+                          <div className="bg-amber-50/80 border border-amber-200 rounded-lg px-2.5 py-1.5 text-[10px] text-amber-900 flex items-center justify-between">
+                            <span className="font-bold flex items-center gap-1">💾 SharedPreferences:</span>
+                            <div className="flex gap-2 font-bold">
+                              <span className={isFavorite(selectedPokemon.id) ? "text-amber-700" : "text-zinc-400"}>
+                                ★ {isFavorite(selectedPokemon.id) ? "Favorito" : "Não Favorito"}
+                              </span>
+                              <span className="text-zinc-300">•</span>
+                              <span className={isCaptured(selectedPokemon.id) ? "text-green-700" : "text-zinc-400"}>
+                                🔴 {isCaptured(selectedPokemon.id) ? "Capturado" : "Não Capturado"}
+                              </span>
+                            </div>
+                          </div>
 
                           {/* Características Físicas */}
                           <div>

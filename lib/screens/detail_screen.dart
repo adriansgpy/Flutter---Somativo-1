@@ -63,7 +63,21 @@ class DetailScreen extends StatelessWidget {
                     size: 32,
                   ),
                   onPressed: () {
+                    final willBeFav = !isFav;
                     favoritesProvider.toggleFavorite(pokemon);
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          willBeFav 
+                              ? "${pokemon.name.toUpperCase()} adicionado aos favoritos e salvo localmente!"
+                              : "${pokemon.name.toUpperCase()} removido dos favoritos.",
+                        ),
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: willBeFav ? Colors.amber.shade800 : Colors.grey.shade800,
+                      ),
+                    );
                   },
                 ),
               );
@@ -178,7 +192,21 @@ class DetailScreen extends StatelessWidget {
                             height: 48, // Acessibilidade RF10
                             child: ElevatedButton.icon(
                               onPressed: () {
+                                final willBeCap = !isCap;
                                 consumedProvider.toggleConsumed(pokemon);
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      willBeCap 
+                                          ? "Parabéns! ${pokemon.name.toUpperCase()} capturado e salvo na Pokédex local!"
+                                          : "${pokemon.name.toUpperCase()} marcado como não capturado.",
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: willBeCap ? Colors.green.shade700 : Colors.grey.shade800,
+                                  ),
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: isCap ? Colors.green.shade600 : Colors.redAccent,

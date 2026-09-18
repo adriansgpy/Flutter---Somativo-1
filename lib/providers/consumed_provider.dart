@@ -1,4 +1,4 @@
-// Implementa RF06 e RF07 — Provedor de Itens Consumidos / "Capturados" (ChangeNotifier)
+// Implementa RF06 e RF07 — Provedor de Itens Consumidos / "Capturados" (ChangeNotifier) com SharedPreferences
 import 'package:flutter/material.dart';
 import '../models/pokemon.dart';
 import '../services/storage_service.dart';
@@ -10,10 +10,20 @@ class ConsumedProvider extends ChangeNotifier {
 
   List<Pokemon> get consumed => _consumed;
 
+  ConsumedProvider() {
+    _autoInit();
+  }
+
+  // Inicialização automática para carregar capturas salvas assim que o app inicia (RF06)
+  Future<void> _autoInit() async {
+    final user = await _storageService.getActiveUsername();
+    await initialize(user);
+  }
+
   // Inicializa a lista de Pokémon capturados do usuário logado (RF06)
   Future<void> initialize(String username) async {
-    _username = username;
-    _consumed = await _storageService.loadConsumed(username);
+    _username = username.trim();
+    _consumed = await _storageService.loadConsumed(_username!);
     notifyListeners();
   }
 
@@ -22,9 +32,10 @@ class ConsumedProvider extends ChangeNotifier {
     return _consumed.any((p) => p.id == id);
   }
 
-  // Alterna o estado de capturado ("Capturado" - RF07)
+  // Alterna o estado de capturado ("Capturado" - RF07 e RF06)
   Future<void> toggleConsumed(Pokemon pokemon) async {
-    if (_username == null) return;
+    _username ??= await _storageService.getActiveUsername();
+    final user = _username!;
 
     if (isConsumed(pokemon.id)) {
       _consumed.removeWhere((p) => p.id == pokemon.id);
@@ -33,8 +44,8 @@ class ConsumedProvider extends ChangeNotifier {
     }
     
     notifyListeners();
-    // Salva de forma persistente no dispositivo local (RF06)
-    await _storageService.saveConsumed(_username!, _consumed);
+    // Salva de forma persistente no dispositivo local com SharedPreferences (RF06)
+    await _storageService.saveConsumed(user, _consumed);
   }
 
   // Limpa o estado local ao efetuar logout

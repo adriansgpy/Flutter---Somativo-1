@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../models/pokemon.dart';
 import '../providers/auth_provider.dart';
+import '../providers/favorites_provider.dart';
+import '../providers/consumed_provider.dart';
 import '../widgets/item_grid_card.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/error_view.dart';
@@ -33,6 +35,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
   void initState() {
     super.initState();
     _loadInitialData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final user = auth.currentUser ?? "treinador";
+      Provider.of<FavoritesProvider>(context, listen: false).initialize(user);
+      Provider.of<ConsumedProvider>(context, listen: false).initialize(user);
+    });
   }
 
   @override
@@ -165,6 +173,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
             child: IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () {
+                Provider.of<FavoritesProvider>(context, listen: false).clear();
+                Provider.of<ConsumedProvider>(context, listen: false).clear();
                 authProvider.logout();
               },
             ),

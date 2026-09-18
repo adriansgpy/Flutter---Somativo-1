@@ -342,53 +342,82 @@ import '../models/pokemon.dart';
 class StorageService {
   static const String _keyFavoritesPrefix = "user_fav_list_";
   static const String _keyConsumedPrefix = "user_con_list_";
+  static const String _keyCurrentUser = "current_user_session";
 
-  // Carrega a lista de favoritos vinculada ao usuário logado
+  // Retorna o usuário logado ativo no SharedPreferences ou 'treinador' como fallback
+  Future<String> getActiveUsername() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final user = prefs.getString(_keyCurrentUser);
+      if (user != null && user.trim().isNotEmpty) {
+        return user.trim();
+      }
+    } catch (_) {}
+    return "treinador";
+  }
+
+  // Carrega a lista de favoritos vinculada ao usuário logado no SharedPreferences (RF06)
   Future<List<Pokemon>> loadFavorites(String username) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = "\\$_keyFavoritesPrefix\${username.trim().toLowerCase()}";
-    final jsonStr = prefs.getString(key);
-    
-    if (jsonStr == null) return [];
-
     try {
-      final List decodedList = jsonDecode(jsonStr);
-      return decodedList.map((item) => Pokemon.fromStorageJson(item)).toList();
-    } catch (e) {
-      return []; // Retorna lista vazia em caso de falha de parsing
-    }
-  }
+      final prefs = await SharedPreferences.getInstance();
+      final key = "\\$_keyFavoritesPrefix\${username.trim().toLowerCase()}";
+      final jsonStr = prefs.getString(key);
+      
+      if (jsonStr == null || jsonStr.trim().isEmpty) return [];
 
-  // Grava a lista de favoritos do usuário logado de forma persistente
-  Future<void> saveFavorites(String username, List<Pokemon> list) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = "\\$_keyFavoritesPrefix\${username.trim().toLowerCase()}";
-    final jsonStr = jsonEncode(list.map((p) => p.toJson()).toList());
-    await prefs.setString(key, jsonStr);
-  }
-
-  // Carrega a lista de itens consumidos ("Capturados") do usuário logado
-  Future<List<Pokemon>> loadConsumed(String username) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = "\\$_keyConsumedPrefix\${username.trim().toLowerCase()}";
-    final jsonStr = prefs.getString(key);
-    
-    if (jsonStr == null) return [];
-
-    try {
-      final List decodedList = jsonDecode(jsonStr);
-      return decodedList.map((item) => Pokemon.fromStorageJson(item)).toList();
+      final decoded = jsonDecode(jsonStr);
+      if (decoded is List) {
+        return decoded
+            .whereType<Map>()
+            .map((item) => Pokemon.fromStorageJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+      return [];
     } catch (e) {
       return [];
     }
   }
 
-  // Grava a lista de itens consumidos ("Capturados") do usuário logado de forma persistente
+  // Grava a lista de favoritos do usuário logado de forma persistente no SharedPreferences (RF06)
+  Future<void> saveFavorites(String username, List<Pokemon> list) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = "\\$_keyFavoritesPrefix\${username.trim().toLowerCase()}";
+      final jsonStr = jsonEncode(list.map((p) => p.toJson()).toList());
+      await prefs.setString(key, jsonStr);
+    } catch (_) {}
+  }
+
+  // Carrega a lista de itens consumidos ("Capturados") do usuário logado no SharedPreferences (RF06)
+  Future<List<Pokemon>> loadConsumed(String username) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = "\\$_keyConsumedPrefix\${username.trim().toLowerCase()}";
+      final jsonStr = prefs.getString(key);
+      
+      if (jsonStr == null || jsonStr.trim().isEmpty) return [];
+
+      final decoded = jsonDecode(jsonStr);
+      if (decoded is List) {
+        return decoded
+            .whereType<Map>()
+            .map((item) => Pokemon.fromStorageJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Grava a lista de itens consumidos ("Capturados") do usuário logado de forma persistente no SharedPreferences (RF06)
   Future<void> saveConsumed(String username, List<Pokemon> list) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = "\\$_keyConsumedPrefix\${username.trim().toLowerCase()}";
-    final jsonStr = jsonEncode(list.map((p) => p.toJson()).toList());
-    await prefs.setString(key, jsonStr);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = "\\$_keyConsumedPrefix\${username.trim().toLowerCase()}";
+      final jsonStr = jsonEncode(list.map((p) => p.toJson()).toList());
+      await prefs.setString(key, jsonStr);
+    } catch (_) {}
   }
 }`
   },
@@ -487,10 +516,20 @@ class FavoritesProvider extends ChangeNotifier {
 
   List<Pokemon> get favorites => _favorites;
 
+  FavoritesProvider() {
+    _autoInit();
+  }
+
+  // Inicialização automática para carregar favoritos salvos no SharedPreferences (RF06)
+  Future<void> _autoInit() async {
+    final user = await _storageService.getActiveUsername();
+    await initialize(user);
+  }
+
   // Inicializa a lista de favoritos com base no usuário autenticado no momento (RF06)
   Future<void> initialize(String username) async {
-    _username = username;
-    _favorites = await _storageService.loadFavorites(username);
+    _username = username.trim();
+    _favorites = await _storageService.loadFavorites(_username!);
     notifyListeners();
   }
 
@@ -499,9 +538,10 @@ class FavoritesProvider extends ChangeNotifier {
     return _favorites.any((p) => p.id == id);
   }
 
-  // Alterna o estado de favorito de um Pokémon, sincronizando com o armazenamento local (RF04)
+  // Alterna o estado de favorito de um Pokémon, sincronizando com SharedPreferences (RF04 e RF06)
   Future<void> toggleFavorite(Pokemon pokemon) async {
-    if (_username == null) return;
+    _username ??= await _storageService.getActiveUsername();
+    final user = _username!;
 
     if (isFavorite(pokemon.id)) {
       _favorites.removeWhere((p) => p.id == pokemon.id);
@@ -510,17 +550,17 @@ class FavoritesProvider extends ChangeNotifier {
     }
     
     notifyListeners();
-    // Persiste a nova lista de favoritos localmente (RF06)
-    await _storageService.saveFavorites(_username!, _favorites);
+    // Persiste a nova lista de favoritos localmente com SharedPreferences (RF06)
+    await _storageService.saveFavorites(user, _favorites);
   }
 
   // Método auxiliar para remoção direta a partir da Tela de Favoritos (RF05)
-  // Garante reatividade instantânea sem necessidade de recarregar a tela
   Future<void> removeFavorite(int id) async {
-    if (_username == null) return;
+    _username ??= await _storageService.getActiveUsername();
+    final user = _username!;
     _favorites.removeWhere((p) => p.id == id);
     notifyListeners();
-    await _storageService.saveFavorites(_username!, _favorites);
+    await _storageService.saveFavorites(user, _favorites);
   }
 
   // Limpa o estado global ao efetuar logout
@@ -536,7 +576,7 @@ class FavoritesProvider extends ChangeNotifier {
     name: 'consumed_provider.dart',
     type: 'code',
     rf: 'RF06, RF07',
-    content: `// Implementa RF06 e RF07 — Provedor de Itens Consumidos / "Capturados" (ChangeNotifier)
+    content: `// Implementa RF06 e RF07 — Provedor de Itens Consumidos / "Capturados" (ChangeNotifier) com SharedPreferences
 import 'package:flutter/material.dart';
 import '../models/pokemon.dart';
 import '../services/storage_service.dart';
@@ -548,10 +588,20 @@ class ConsumedProvider extends ChangeNotifier {
 
   List<Pokemon> get consumed => _consumed;
 
+  ConsumedProvider() {
+    _autoInit();
+  }
+
+  // Inicialização automática para carregar dados persistidos no SharedPreferences
+  Future<void> _autoInit() async {
+    final user = await _storageService.getActiveUsername();
+    await initialize(user);
+  }
+
   // Inicializa a lista de Pokémon capturados do usuário logado (RF06)
   Future<void> initialize(String username) async {
-    _username = username;
-    _consumed = await _storageService.loadConsumed(username);
+    _username = username.trim();
+    _consumed = await _storageService.loadConsumed(_username!);
     notifyListeners();
   }
 
@@ -560,9 +610,10 @@ class ConsumedProvider extends ChangeNotifier {
     return _consumed.any((p) => p.id == id);
   }
 
-  // Alterna o estado de capturado ("Capturado" - RF07)
+  // Alterna o estado de capturado ("Capturado" - RF07 e RF06)
   Future<void> toggleConsumed(Pokemon pokemon) async {
-    if (_username == null) return;
+    _username ??= await _storageService.getActiveUsername();
+    final user = _username!;
 
     if (isConsumed(pokemon.id)) {
       _consumed.removeWhere((p) => p.id == pokemon.id);
@@ -571,8 +622,8 @@ class ConsumedProvider extends ChangeNotifier {
     }
     
     notifyListeners();
-    // Salva de forma persistente no dispositivo local (RF06)
-    await _storageService.saveConsumed(_username!, _consumed);
+    // Salva de forma persistente no dispositivo local com SharedPreferences (RF06)
+    await _storageService.saveConsumed(user, _consumed);
   }
 
   // Limpa o estado local ao efetuar logout

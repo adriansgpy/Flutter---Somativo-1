@@ -24,18 +24,24 @@ class Pokemon {
 
   // Converte o JSON original vindo da PokéAPI (RF01 e RF03)
   factory Pokemon.fromJson(Map<String, dynamic> json) {
-    final name = json['name'] as String;
-    final id = json['id'] as int;
+    final name = json['name'] as String? ?? 'pokemon';
+    final id = json['id'] as int? ?? 0;
 
     // Converte os tipos (geralmente uma lista de objetos na PokéAPI)
     final typesList = (json['types'] as List?)?.map((t) {
-      return t['type']['name'] as String;
+      if (t is Map && t['type'] is Map) {
+        return t['type']['name']?.toString() ?? 'normal';
+      }
+      return 'normal';
     }).toList() ?? [];
 
     // Converte as habilidades
     final abilitiesList = (json['abilities'] as List?)?.map((a) {
-      return a['ability']['name'] as String;
-    }).toList() ?? [];
+      if (a is Map && a['ability'] is Map) {
+        return a['ability']['name']?.toString() ?? '';
+      }
+      return '';
+    }).where((s) => s.isNotEmpty).toList() ?? [];
 
     // URL da imagem oficial do Pokémon em alta resolução, conforme especificado na OPÇÃO B
     final imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png";
@@ -72,17 +78,17 @@ class Pokemon {
     };
   }
 
-  // Deserializa de dados que foram salvos localmente
+  // Deserializa de dados que foram salvos localmente no SharedPreferences (RF06)
   factory Pokemon.fromStorageJson(Map<String, dynamic> json) {
     return Pokemon(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      imageUrl: json['imageUrl'] as String,
-      types: List<String>.from(json['types'] as List),
-      height: json['height'] as int? ?? 0,
-      weight: json['weight'] as int? ?? 0,
-      abilities: List<String>.from(json['abilities'] as List),
-      description: json['description'] as String? ?? "",
+      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString() ?? '',
+      types: (json['types'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      height: json['height'] is int ? json['height'] as int : int.tryParse(json['height']?.toString() ?? '0') ?? 0,
+      weight: json['weight'] is int ? json['weight'] as int : int.tryParse(json['weight']?.toString() ?? '0') ?? 0,
+      abilities: (json['abilities'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      description: json['description']?.toString() ?? '',
     );
   }
 
