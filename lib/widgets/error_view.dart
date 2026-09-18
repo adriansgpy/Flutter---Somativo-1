@@ -51,7 +51,7 @@ class ErrorView extends StatelessWidget {
                 button: true,
                 label: "Toque duas vezes para carregar novamente as informações",
                 child: SizedBox(
-                  minWidth: 180,
+                  width: 200,
                   height: 48, // Atende RF10 (Área de toque mínima de 48 logical pixels)
                   child: ElevatedButton.icon(
                     onPressed: onRetry,

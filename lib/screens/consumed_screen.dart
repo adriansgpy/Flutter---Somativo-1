@@ -22,38 +22,40 @@ class ConsumedScreen extends StatelessWidget {
             final consumedList = consumedProvider.consumed;
 
             if (consumedList.isEmpty) {
-              return Center(
+              return Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: Semantics(
-                  label: "Lista de capturas vazia. Você ainda não capturou nenhum Pokémon.",
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.catching_pokemon,
-                        color: Colors.red.shade200,
-                        size: 80,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Nenhuma captura ainda!",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                child: Center(
+                  child: Semantics(
+                    label: "Lista de capturas vazia. Você ainda não capturou nenhum Pokémon.",
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.catching_pokemon,
+                          color: Colors.red.shade200,
+                          size: 80,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Abra os detalhes de um Pokémon e toque em 'MARCAR COMO CAPTURADO' para que ele seja catalogado nesta seção.",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Nenhuma captura ainda!",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Abra os detalhes de um Pokémon e toque em 'MARCAR COMO CAPTURADO' para que ele seja catalogado nesta seção.",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

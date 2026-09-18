@@ -125,7 +125,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text("Nenhum Pokémon encontrado com este nome exato."),
-              backgroundColor: Colors.orangeDark,
+              backgroundColor: Colors.deepOrange,
             ),
           );
         }

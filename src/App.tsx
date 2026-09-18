@@ -548,7 +548,7 @@ export default function App() {
                                     className="bg-white rounded-xl p-2.5 border border-zinc-200/80 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col items-center text-center relative group"
                                   >
                                     <span className="absolute top-1 right-2 text-[9px] font-bold text-zinc-400">
-                                      #{p.id.toString().padLeft(3, '0')}
+                                      #{p.id.toString().padStart(3, '0')}
                                     </span>
                                     <img 
                                       src={p.imageUrl} 
@@ -623,7 +623,7 @@ export default function App() {
                             className="w-36 h-36 object-contain drop-shadow-md my-2"
                           />
                           <h4 className="font-black text-lg uppercase text-zinc-800 tracking-wider">
-                            {selectedPokemon.name} <span className="text-zinc-400 text-sm">#{selectedPokemon.id.toString().padLeft(3, '0')}</span>
+                            {selectedPokemon.name} <span className="text-zinc-400 text-sm">#{selectedPokemon.id.toString().padStart(3, '0')}</span>
                           </h4>
                           <div className="flex gap-2 mt-1">
                             {selectedPokemon.types.map((t: string) => {
@@ -721,7 +721,7 @@ export default function App() {
                                   <img src={p.imageUrl} alt={p.name} className="w-10 h-10 object-contain" />
                                   <div>
                                     <h5 className="font-bold text-xs uppercase text-zinc-800 leading-none">{p.name}</h5>
-                                    <span className="text-[9px] text-zinc-400">Nº {p.id.toString().padLeft(3, '0')}</span>
+                                    <span className="text-[9px] text-zinc-400">Nº {p.id.toString().padStart(3, '0')}</span>
                                   </div>
                                 </div>
                                 <button 
@@ -775,7 +775,7 @@ export default function App() {
                                   <img src={p.imageUrl} alt={p.name} className="w-10 h-10 object-contain" />
                                   <div>
                                     <h5 className="font-bold text-xs uppercase text-zinc-800 leading-none">{p.name}</h5>
-                                    <span className="text-[9px] text-zinc-400">Nº {p.id.toString().padLeft(3, '0')}</span>
+                                    <span className="text-[9px] text-zinc-400">Nº {p.id.toString().padStart(3, '0')}</span>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-green-50 px-2 py-1 rounded-md border border-green-200">

@@ -22,38 +22,40 @@ class FavoritesScreen extends StatelessWidget {
             final favoritesList = favoritesProvider.favorites;
 
             if (favoritesList.isEmpty) {
-              return Center(
+              return Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: Semantics(
-                  label: "Lista de favoritos vazia. Você ainda não favoritou nenhum Pokémon.",
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.star_outline_rounded,
-                        color: Colors.amber.shade300,
-                        size: 80,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Estante Vazia!",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                child: Center(
+                  child: Semantics(
+                    label: "Lista de favoritos vazia. Você ainda não favoritou nenhum Pokémon.",
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.star_outline_rounded,
+                          color: Colors.amber.shade300,
+                          size: 80,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Os Pokémon que você favoritar tocando na estrela da tela de detalhes aparecerão aqui.",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Estante Vazia!",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Os Pokémon que você favoritar tocando na estrela da tela de detalhes aparecerão aqui.",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

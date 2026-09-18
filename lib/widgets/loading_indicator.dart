@@ -11,7 +11,6 @@ class LoadingIndicator extends StatelessWidget {
     return Center(
       child: Semantics(
         label: "Indicador de processamento ativo. Mensagem: $message",
-        loading: true,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
